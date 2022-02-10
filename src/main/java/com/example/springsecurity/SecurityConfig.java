@@ -2,9 +2,11 @@ package com.example.springsecurity;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -25,6 +27,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
     UserDetailsService userDetailsService;
+
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.inMemoryAuthentication().withUser("user").password("{noop}1111").roles("USER");
+        auth.inMemoryAuthentication().withUser("sys").password("{noop}1111").roles("SYS", "USER");
+        auth.inMemoryAuthentication().withUser("admin").password("{noop}1111").roles("ADMIN", "SYS", "USER");
+    }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -94,10 +103,34 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .userDetailsService(userDetailsService) // 서비스 함수
                 ;
 
+        http
+                .sessionManagement() // 세션 관리
 
+                // 동시 세션 제어(세션이 초과했을 때 어떻게 대응할지 정함)
+
+                .maximumSessions(1) // 최대 세션 개수 정의
+
+                // 세션이 초과하였을 때의 설정 { true: "세션이 더이상 추가되지않게함(로그인 안됨)", false: "이전 사용자 제거" }
+                // 세션은 브라우저를 기준
+                .maxSessionsPreventsLogin(true)
+        ;
+
+        http
+                .sessionManagement()
+
+                // 세션 고정 보호(해커가 세션을 주입한 경우)
+                .sessionFixation().changeSessionId() // 기본값 (옵션: none, migrateSession, newSession)
+        ;
+
+        http
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                                                    // SessionCreationPolicy. Always 		:  스프링 시큐리티가 항상 세션 생성
+                                                    // SessionCreationPolicy. If_Required 	:  스프링 시큐리티가 필요 시 생성(기본값)
+                                                    // SessionCreationPolicy. Never   		:  스프링 시큐리티가 생성하지 않지만 이미 존재하면 사용
+                                                    // SessionCreationPolicy. Stateless	 	:  스프링 시큐리티가 생성하지 않고 존재해도 사용하지 않음
+        ;
 
 
     }
-
-
 }
