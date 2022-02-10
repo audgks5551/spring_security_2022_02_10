@@ -39,10 +39,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
 
         http
-                .authorizeRequests()
-                .anyRequest().authenticated();
-
-        http
                 .formLogin()
                 //.loginPage("/loginPage") // 로그인 페이지 주소 (이걸 활성화하면 기본으로 제공하는 템플릿 사용불가)
                 .defaultSuccessUrl("/") // 로그인 성공시 리다이렉트하는 주소
@@ -112,7 +108,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
                 // 세션이 초과하였을 때의 설정 { true: "세션이 더이상 추가되지않게함(로그인 안됨)", false: "이전 사용자 제거" }
                 // 세션은 브라우저를 기준
-                .maxSessionsPreventsLogin(true)
+                .maxSessionsPreventsLogin(false)
         ;
 
         http
@@ -129,6 +125,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                                                     // SessionCreationPolicy. If_Required 	:  스프링 시큐리티가 필요 시 생성(기본값)
                                                     // SessionCreationPolicy. Never   		:  스프링 시큐리티가 생성하지 않지만 이미 존재하면 사용
                                                     // SessionCreationPolicy. Stateless	 	:  스프링 시큐리티가 생성하지 않고 존재해도 사용하지 않음
+        ;
+
+        http
+                .antMatcher("/**") // 특정 경로 지정(지금은 모든 범위 설정)
+                .authorizeRequests() // 요청에 대한 권한을 지정
+
+                .antMatchers("/user").hasRole("USER") // "/user" 경로는 USER 권한을 가진 유저만 접근가능
+
+                // **주의 사항** - 설정 시 구체적인 경로가 먼저 오고 그것 보다 큰 범위의 경로가 뒤에 오도록 해야 한다
+                .antMatchers("/admin/pay").hasRole("ADMIN") // "/admin/pay" 경로는 ADMIN과 SYS 권한을 가진 유저만 접근가능
+                .antMatchers("/admin/**").access("hasRole('ADMIN') or hasRole('SYS')") // "/admin/**" 경로는 ADMIN과 SYS 권한을 가진 유저만 접근가능
+
+                .anyRequest().authenticated() // 어떤 요청이던지 인증된 사용자의 접근을 허용
         ;
 
 
