@@ -1,11 +1,13 @@
 package com.example.springsecurity;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
@@ -20,6 +22,9 @@ import java.io.IOException;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+    @Autowired
+    UserDetailsService userDetailsService;
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -81,6 +86,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 })
                 .deleteCookies("remember-me") // 쿠키 삭제
                 ;
+
+        http
+                .rememberMe() // 세션이 없어도 자동 로그인 가능
+                .rememberMeParameter("remember-me") // input 태그의 name 정의
+                .tokenValiditySeconds(3600) // remember-me 쿠키가 살아있는 시간
+                .userDetailsService(userDetailsService) // 서비스 함수
+                ;
+
+
+
 
     }
 
