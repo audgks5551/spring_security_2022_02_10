@@ -30,7 +30,7 @@ import java.io.IOException;
 
 //@Configuration
 //@EnableWebSecurity
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
+class SecurityConfig100 extends WebSecurityConfigurerAdapter {
 
     @Autowired
     UserDetailsService userDetailsService;
@@ -177,6 +177,41 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 .csrf() // 기본 활성화되어 있음
                         //.disabled() : 비활성화
+        ;
+    }
+}
+
+@Configuration
+@EnableWebSecurity
+@Order(0)
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+
+        http
+                .antMatcher("/admin/**")
+                .authorizeRequests()
+                .anyRequest().authenticated()
+        .and()
+                .httpBasic()
+        ;
+
+    }
+}
+
+@Configuration
+@Order(1)
+class SecurityConfig2 extends WebSecurityConfigurerAdapter {
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+
+        http
+                .authorizeRequests()
+                .anyRequest().permitAll()
+        .and()
+                .formLogin()
         ;
     }
 }
