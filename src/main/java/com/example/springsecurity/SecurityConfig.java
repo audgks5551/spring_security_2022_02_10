@@ -2,6 +2,7 @@ package com.example.springsecurity;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -10,10 +11,15 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
+import org.springframework.security.web.savedrequest.RequestCache;
+import org.springframework.security.web.savedrequest.SavedRequest;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -51,8 +57,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .successHandler(new AuthenticationSuccessHandler() {
                     @Override
                     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-                        System.out.println("Authentication : " + authentication.getName());
-                        response.sendRedirect("/");
+
+                        // 세션 캐쉬를 이용하여 인가 거부를 당한 url로 이동
+                        RequestCache requestCache = new HttpSessionRequestCache();
+                        SavedRequest savedRequest = requestCache.getRequest(request, response);
+                        String redirectUrl = savedRequest.getRedirectUrl();
+                        response.sendRedirect(redirectUrl);
+
                     }
                 })
 
@@ -131,6 +142,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatcher("/**") // 특정 경로 지정(지금은 모든 범위 설정)
                 .authorizeRequests() // 요청에 대한 권한을 지정
 
+                .antMatchers("/login").permitAll() // 로그인 페이지 모든 사용자 허용
+
                 .antMatchers("/user").hasRole("USER") // "/user" 경로는 USER 권한을 가진 유저만 접근가능
 
                 // **주의 사항** - 설정 시 구체적인 경로가 먼저 오고 그것 보다 큰 범위의 경로가 뒤에 오도록 해야 한다
@@ -139,6 +152,28 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
                 .anyRequest().authenticated() // 어떤 요청이던지 인증된 사용자의 접근을 허용
         ;
+
+        http
+                .exceptionHandling()
+
+                // 인증 예외 처리 함수
+//                .authenticationEntryPoint(new AuthenticationEntryPoint() {
+//                    @Override
+//                    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
+//                        response.sendRedirect("/login");
+//                    }
+//                })
+
+                // 인가 예외 처리 함수 (http 403)
+                .accessDeniedHandler(new AccessDeniedHandler() {
+                    @Override
+                    public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
+                        response.sendRedirect("/denied");
+                    }
+                })
+        ;
+
+
 
 
     }

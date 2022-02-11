@@ -11,11 +11,6 @@ public class SecurityController {
         return "home";
     }
 
-    @GetMapping("/loginPage")
-    public String loginPage() {
-        return "loginPage";
-    }
-
     @GetMapping("/user")
     public String user() {
         return "user";
@@ -30,4 +25,15 @@ public class SecurityController {
     public String admin() {
         return "admin";
     }
+
+    @GetMapping("/login")
+    public String login() {
+        return "login";
+    }
+
+    @GetMapping("/denied")
+    public String denied() {
+        return "denied";
+    }
+
 }
